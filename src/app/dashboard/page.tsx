@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { LessonActions } from "@/components/lesson-actions";
+import { DogProfile } from "@/components/dog-profile";
 import { noticeDeadline } from "@/lib/lesson-notice";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) return null;
 
-  const [enrollments, links, lessons] = await Promise.all([
+  const [enrollments, links, lessons, dogs] = await Promise.all([
     prisma.enrollment.findMany({
       where: { clientId: session.user.id },
       include: { dog: true, service: true, invoice: true },
@@ -49,6 +50,7 @@ export default async function DashboardPage() {
       include: { enrollment: { include: { dog: true, service: true } }, rescheduledTo: true },
       orderBy: { scheduledStart: "asc" },
     }),
+    prisma.dog.findMany({ where: { ownerId: session.user.id }, orderBy: { createdAt: "asc" } }),
   ]);
 
   const isLead = session.user.role === "LEAD";
@@ -69,6 +71,14 @@ export default async function DashboardPage() {
           messaging.
         </p>
       )}
+
+      <section className="mt-8 space-y-3">
+        <h2 className="text-lg font-semibold text-brand">Your Dogs</h2>
+        {dogs.map((dog) => (
+          <DogProfile key={dog.id} dog={dog} />
+        ))}
+        {dogs.length === 0 && <p className="text-muted">No dogs on file yet.</p>}
+      </section>
 
       <section className="mt-8 space-y-4">
         {enrollments.map((e) => {

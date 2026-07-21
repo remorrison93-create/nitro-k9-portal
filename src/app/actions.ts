@@ -116,6 +116,38 @@ export async function rescheduleLessonAction(
   return { error: null };
 }
 
+const MAX_BIO_LENGTH = 500;
+const MAX_PHOTO_DATA_URL_LENGTH = 1_500_000; // client resizes before upload; this is just a backstop
+
+export async function updateDogProfileAction(
+  dogId: string,
+  data: { bio: string; photoDataUrl: string | null }
+) {
+  const session = await auth();
+  if (!session?.user) return { error: "Unauthorized" };
+
+  const dog = await prisma.dog.findUnique({ where: { id: dogId } });
+  if (!dog || dog.ownerId !== session.user.id) return { error: "Dog not found." };
+
+  const bio = data.bio.trim().slice(0, MAX_BIO_LENGTH);
+  const photoDataUrl = data.photoDataUrl;
+
+  if (photoDataUrl && (!photoDataUrl.startsWith("data:image/") || photoDataUrl.length > MAX_PHOTO_DATA_URL_LENGTH)) {
+    return { error: "That photo couldn't be saved — try a smaller image." };
+  }
+
+  await prisma.dog.update({
+    where: { id: dog.id },
+    data: {
+      bio: bio || null,
+      ...(photoDataUrl ? { photoUrl: photoDataUrl } : {}),
+    },
+  });
+
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
 export async function sendMessageAction(_prevState: string | null, formData: FormData) {
   const session = await auth();
   if (!session?.user) return "Unauthorized";

@@ -68,6 +68,11 @@ model Dog {
   breed       String?
   weightLbs   Int
   weightClass WeightClass
+  // Client-editable profile. photoUrl holds a resized data: URL for now (see
+  // updateDogProfileAction) — fine at this scale, worth moving to real object storage
+  // (Supabase Storage / S3) before this needs to handle many large images.
+  photoUrl    String?
+  bio         String?
   owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId     String
   enrollments Enrollment[]

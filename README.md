@@ -31,6 +31,7 @@ just need a Postgres database to actually create/read records.
 | Message center | `Message` model, `/dashboard/messages` (client) and `/admin/messages` (staff) |
 | Helpful links | `HelpfulLink` model, shown on `/dashboard` |
 | Reschedule/cancel a lesson (72h notice weekdays, 7 days weekends, else forfeit) | `src/lib/lesson-notice.ts` (pure policy calc, safe for client+server) + `src/lib/booking.ts` → `cancelLesson()` / `rescheduleLesson()`, surfaced on `/dashboard` under "Upcoming Lessons" / "Lesson History" |
+| Dog profile photo + bio, client-editable | `Dog.photoUrl` / `Dog.bio`, `updateDogProfileAction()`, `/dashboard` "Your Dogs" section (`src/components/dog-profile.tsx`) — see note below on where the photo actually lives |
 
 ## Getting started
 
@@ -55,7 +56,9 @@ hand from your database provider's SQL editor (e.g. Supabase's):
 2. Run `prisma/migrations/20260721010000_lesson_notice_actions/migration.sql` — adds lesson
    reschedule/cancel/forfeit support (skip this if your database is brand new and hasn't run
    step 1 yet — the `db:migrate` / full init path already includes it).
-3. Run `prisma/seed.sql` — inserts the same placeholder services/admin user/link as `npm run db:seed`.
+3. Run `prisma/migrations/20260721020000_dog_profile/migration.sql` — adds `Dog.photoUrl` /
+   `Dog.bio`.
+4. Run `prisma/seed.sql` — inserts the same placeholder services/admin user/link as `npm run db:seed`.
 
 The seed file uses fixed ids, so running `npm run db:seed` later from somewhere with real
 connectivity is a safe no-op for rows already inserted this way. Each migration file only needs
@@ -85,7 +88,12 @@ will 500 until a database is connected. That's expected for right now.
    but consider swapping in a managed provider (Clerk, Auth0) before launch, particularly for
    password reset flows and account recovery. The session shape (`id/email/role/firstName/lastName`)
    is intentionally decoupled from the provider so this swap doesn't ripple through the app.
-5. No test suite yet.
+5. **Dog photos** — unlike the others, this one actually works today, no credentials needed:
+   `updateDogProfileAction()` resizes the image client-side (canvas, capped at 480px) and stores
+   it as a `data:` URL directly in `Dog.photoUrl`. Fine at this scale; move to real object
+   storage (Supabase Storage, since a database is already there, or S3) before this needs to
+   hold many/larger images — Postgres rows aren't the right place for that long-term.
+6. No test suite yet.
 
 ## Deploying (Netlify)
 
