@@ -50,20 +50,27 @@ The seeded admin login is `admin@example.com` / `change-me-now` — **change thi
 
 Some environments (sandboxed dev containers, CI, etc.) can't open a raw Postgres connection —
 only outbound HTTPS. If `npm run db:migrate` can't reach the database, you can bootstrap it by
-hand from your database provider's SQL editor (e.g. Supabase's):
+hand from your database provider's SQL editor (e.g. Supabase's).
 
-1. Run `prisma/migrations/20260721000000_init/migration.sql` — creates every table.
-2. Run `prisma/migrations/20260721010000_lesson_notice_actions/migration.sql` — adds lesson
-   reschedule/cancel/forfeit support (skip this if your database is brand new and hasn't run
-   step 1 yet — the `db:migrate` / full init path already includes it).
-3. Run `prisma/migrations/20260721020000_dog_profile/migration.sql` — adds `Dog.photoUrl` /
+**Starting from a brand-new/empty database:** paste `prisma/manual-setup.sql` in one shot —
+it's every migration plus the seed data, concatenated in order. Verified to run cleanly as a
+single script (tested against a fresh Postgres instance end to end).
+
+**Database already has some of these tables** (e.g. you ran the init migration previously and
+are catching up on later features): run only what's missing, in order:
+
+1. `prisma/migrations/20260721000000_init/migration.sql` — creates every table.
+2. `prisma/migrations/20260721010000_lesson_notice_actions/migration.sql` — lesson
+   reschedule/cancel/forfeit support.
+3. `prisma/migrations/20260721020000_dog_profile/migration.sql` — adds `Dog.photoUrl` /
    `Dog.bio`.
-4. Run `prisma/seed.sql` — inserts the same placeholder services/admin user/link as `npm run db:seed`.
+4. `prisma/seed.sql` — placeholder services/admin user/link (same as `npm run db:seed`).
 
-The seed file uses fixed ids, so running `npm run db:seed` later from somewhere with real
-connectivity is a safe no-op for rows already inserted this way. Each migration file only needs
-to be run once, ever, in order — running the same one twice will error on the second try
-(tables/columns already exist), which is expected and harmless.
+The seed data uses fixed ids, so running it (or `npm run db:seed`) again later from somewhere
+with real connectivity is a safe no-op. Each migration only needs to run once, ever — running
+the same one twice will error on the second try (tables/columns already exist), which is
+expected and harmless. `manual-setup.sql` itself gets regenerated/appended to as new migrations
+are added, so it always reflects the full current schema.
 
 Without a real `DATABASE_URL`, everything not touching the database (the homepage, login
 and signup forms) still renders; pages that query Prisma (`/shop`, `/dashboard`, `/admin/*`)
