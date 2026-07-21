@@ -44,6 +44,18 @@ npm run dev
 The seeded admin login is `admin@example.com` / `change-me-now` — **change this password
 (or delete/reseed) before this ever goes anywhere near production.**
 
+### No direct DB access from where you're running this?
+
+Some environments (sandboxed dev containers, CI, etc.) can't open a raw Postgres connection —
+only outbound HTTPS. If `npm run db:migrate` can't reach the database, you can bootstrap it by
+hand from your database provider's SQL editor (e.g. Supabase's):
+
+1. Run `prisma/migrations/20260721000000_init/migration.sql` — creates every table.
+2. Run `prisma/seed.sql` — inserts the same placeholder services/admin user/link as `npm run db:seed`.
+
+Both use fixed ids, so running `npm run db:seed` later from somewhere with real connectivity is
+a safe no-op for rows already inserted this way.
+
 Without a real `DATABASE_URL`, everything not touching the database (the homepage, login
 and signup forms) still renders; pages that query Prisma (`/shop`, `/dashboard`, `/admin/*`)
 will 500 until a database is connected. That's expected for right now.
