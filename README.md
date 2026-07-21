@@ -81,6 +81,22 @@ will 500 until a database is connected. That's expected for right now.
    is intentionally decoupled from the provider so this swap doesn't ripple through the app.
 5. No test suite yet.
 
+## Deploying (Netlify)
+
+`netlify.toml` is already set up with `@netlify/plugin-nextjs` (the official Next.js runtime).
+To go live:
+
+1. [app.netlify.com](https://app.netlify.com) → **Add new site → Import an existing project** → pick
+   this repo. Build settings are picked up from `netlify.toml` automatically.
+2. **Site configuration → Environment variables** — add at minimum `DATABASE_URL` and
+   `AUTH_SECRET` (generate one with `npx auth secret`). Add the Square/Graph/email vars later,
+   once those integrations are wired up for real.
+3. Deploy. Netlify builds and gives you a live URL on every push to `main`.
+
+Note: this repo targets Next.js 16, which is very new — if the Netlify build fails on something
+framework-specific, check the [@netlify/plugin-nextjs releases](https://github.com/opennextjs/opennextjs-netlify/releases)
+for compatibility notes before assuming the app code is wrong.
+
 ## Path to a mobile app
 
 Don't build native first. In order of effort:
