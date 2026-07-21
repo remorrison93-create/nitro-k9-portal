@@ -64,7 +64,11 @@ are catching up on later features): run only what's missing, in order:
    reschedule/cancel/forfeit support.
 3. `prisma/migrations/20260721020000_dog_profile/migration.sql` — adds `Dog.photoUrl` /
    `Dog.bio`.
-4. `prisma/seed.sql` — placeholder services/admin user/link (same as `npm run db:seed`).
+4. `prisma/migrations/20260721030000_enable_rls/migration.sql` — enables Row Level Security
+   on every table (no policies — the app connects directly as the table-owning role and
+   bypasses RLS regardless; this only closes off Supabase's auto-exposed public REST API,
+   which the app doesn't use).
+5. `prisma/seed.sql` — placeholder services/admin user/link (same as `npm run db:seed`).
 
 The seed data uses fixed ids, so running it (or `npm run db:seed`) again later from somewhere
 with real connectivity is a safe no-op. Each migration only needs to run once, ever — running

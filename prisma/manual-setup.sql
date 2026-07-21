@@ -2,7 +2,8 @@
 -- Nitro K-9 Portal — full manual database setup
 -- Paste this WHOLE file into Supabase SQL Editor and run it once.
 -- Combines: init migration + lesson notice/reschedule migration +
--- dog profile migration + placeholder seed data, in the correct order.
+-- dog profile migration + RLS enablement + placeholder seed data,
+-- in the correct order.
 -- ============================================================
 
 -- === 1) init ===
@@ -217,7 +218,26 @@ ALTER TABLE "Dog" ADD COLUMN     "bio" TEXT,
 ADD COLUMN     "photoUrl" TEXT;
 
 
--- === 4) seed data ===
+-- === 4) enable_rls ===
+-- Enable Row Level Security on every table, with no policies defined.
+--
+-- This app never talks to Supabase's PostgREST/GraphQL API or the anon key — Prisma connects
+-- directly as the `postgres` role, which owns these tables and bypasses RLS by default, so
+-- this has no effect on the app itself. What it does do: Supabase auto-exposes every table in
+-- `public` over its REST API by default, so without RLS, anyone with the project's anon key
+-- could read/write these tables directly. Enabling RLS with zero policies closes that off
+-- entirely, since no policy means no access for any role that isn't the owner/bypasses RLS.
+
+ALTER TABLE "User" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Dog" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Service" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Enrollment" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Invoice" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Lesson" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Message" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "HelpfulLink" ENABLE ROW LEVEL SECURITY;
+
+-- === 5) seed data ===
 -- Manual seed for use in the Supabase SQL Editor, when `npm run db:seed` can't reach the
 -- database directly (e.g. from a sandboxed dev session). Mirrors prisma/seed.ts — same fixed
 -- ids, so running `npm run db:seed` later from anywhere with real connectivity is a safe no-op
