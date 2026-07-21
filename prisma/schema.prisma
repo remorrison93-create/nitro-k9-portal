@@ -39,7 +39,9 @@ enum InvoiceStatus {
 enum LessonStatus {
   SCHEDULED
   COMPLETED
-  CANCELED
+  CANCELED // canceled with sufficient notice; the lesson credit was returned
+  FORFEITED // canceled/reschedule attempted inside the notice window; credit lost
+  RESCHEDULED // moved to a new Lesson (see rescheduledTo); same credit, new time
   NO_SHOW
 }
 
@@ -145,6 +147,11 @@ model Lesson {
   status         LessonStatus @default(SCHEDULED)
   outlookEventId String?      @unique
   notes          String?
+
+  // Set on the old lesson when it's rescheduled; points at the new Lesson row it became.
+  rescheduledToId String?  @unique
+  rescheduledTo   Lesson?  @relation("LessonReschedule", fields: [rescheduledToId], references: [id])
+  rescheduledFrom Lesson?  @relation("LessonReschedule")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -1,11 +1,23 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { LessonActions } from "@/components/lesson-actions";
+import { noticeDeadline } from "@/lib/lesson-notice";
 
 export const dynamic = "force-dynamic";
 
 function formatPrice(cents: number) {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
+
+function formatDateTime(d: Date) {
+  return d.toLocaleString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 const CONTRACT_LABEL: Record<string, string> = {
@@ -14,20 +26,36 @@ const CONTRACT_LABEL: Record<string, string> = {
   SIGNED: "Contract signed",
 };
 
+const HISTORY_NOTE: Record<string, string> = {
+  COMPLETED: "Completed",
+  CANCELED: "Cancelled — credit returned",
+  FORFEITED: "Forfeited — notice window missed",
+  NO_SHOW: "No-show",
+};
+
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) return null;
 
-  const [enrollments, links] = await Promise.all([
+  const [enrollments, links, lessons] = await Promise.all([
     prisma.enrollment.findMany({
       where: { clientId: session.user.id },
       include: { dog: true, service: true, invoice: true },
       orderBy: { createdAt: "desc" },
     }),
     prisma.helpfulLink.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.lesson.findMany({
+      where: { enrollment: { clientId: session.user.id } },
+      include: { enrollment: { include: { dog: true, service: true } }, rescheduledTo: true },
+      orderBy: { scheduledStart: "asc" },
+    }),
   ]);
 
   const isLead = session.user.role === "LEAD";
+  const upcomingLessons = lessons.filter((l) => l.status === "SCHEDULED");
+  const lessonHistory = lessons
+    .filter((l) => l.status !== "SCHEDULED")
+    .sort((a, b) => b.scheduledStart.getTime() - a.scheduledStart.getTime());
 
   return (
     <main className="mx-auto max-w-4xl flex-1 px-6 py-12">
@@ -92,6 +120,62 @@ export default async function DashboardPage() {
         {enrollments.length === 0 && (
           <p className="text-muted">No programs yet — visit the shop to get started.</p>
         )}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-lg font-semibold text-brand">Upcoming Lessons</h2>
+        <p className="mt-1 text-xs text-muted-2">
+          Weekday lessons need 72 hours notice to reschedule or cancel; weekend lessons need a
+          full 7 days. Canceling or rescheduling after that deadline forfeits the lesson — no
+          credit is returned.
+        </p>
+        <div className="mt-3 space-y-3">
+          {upcomingLessons.map((l) => (
+            <div
+              key={l.id}
+              className="flex items-center justify-between rounded-lg border border-border bg-card p-4"
+            >
+              <div>
+                <p className="font-medium text-foreground">{formatDateTime(l.scheduledStart)}</p>
+                <p className="text-sm text-muted">
+                  {l.enrollment.service.name} — {l.enrollment.dog.name}
+                </p>
+                <p className="mt-1 text-xs text-muted-2">
+                  Reschedule/cancel by {noticeDeadline(l.scheduledStart).toLocaleString()} to avoid
+                  forfeiting this lesson
+                </p>
+              </div>
+              <LessonActions
+                lessonId={l.id}
+                enrollmentId={l.enrollmentId}
+                scheduledStart={l.scheduledStart.toISOString()}
+              />
+            </div>
+          ))}
+          {upcomingLessons.length === 0 && (
+            <p className="text-muted">No lessons scheduled yet.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-lg font-semibold text-brand">Lesson History</h2>
+        <div className="mt-3 space-y-2">
+          {lessonHistory.map((l) => (
+            <div key={l.id} className="rounded-lg border border-border bg-card/50 p-4 opacity-60">
+              <p className="font-medium text-foreground">{formatDateTime(l.scheduledStart)}</p>
+              <p className="text-sm text-muted">
+                {l.enrollment.service.name} — {l.enrollment.dog.name}
+              </p>
+              <p className="mt-1 text-xs text-muted-2">
+                {l.status === "RESCHEDULED" && l.rescheduledTo
+                  ? `Rescheduled to ${formatDateTime(l.rescheduledTo.scheduledStart)}`
+                  : HISTORY_NOTE[l.status] ?? l.status}
+              </p>
+            </div>
+          ))}
+          {lessonHistory.length === 0 && <p className="text-muted">No past lessons yet.</p>}
+        </div>
       </section>
 
       {!isLead && (

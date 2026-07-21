@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { bookLessonAction } from "@/app/actions";
+import { bookLessonAction, rescheduleLessonAction } from "@/app/actions";
 
 interface Slot {
   start: string;
@@ -12,9 +12,11 @@ interface Slot {
 export function ScheduleClient({
   enrollmentId,
   lessonsLeft,
+  rescheduleLessonId,
 }: {
   enrollmentId: string;
   lessonsLeft: number;
+  rescheduleLessonId?: string;
 }) {
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,9 @@ export function ScheduleClient({
   function handleBook(slot: Slot) {
     setError(null);
     startTransition(async () => {
-      const result = await bookLessonAction(enrollmentId, slot);
+      const result = rescheduleLessonId
+        ? await rescheduleLessonAction(rescheduleLessonId, slot)
+        : await bookLessonAction(enrollmentId, slot);
       if (result.error) {
         setError(result.error);
       } else {
@@ -42,14 +46,15 @@ export function ScheduleClient({
     });
   }
 
-  if (lessonsLeft <= 0) {
+  if (!rescheduleLessonId && lessonsLeft <= 0) {
     return <p className="mt-6 text-sm text-muted">No lessons remaining on this program.</p>;
   }
 
   if (booked) {
     return (
       <p className="mt-6 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-        Lesson booked! Check your dashboard for details.
+        {rescheduleLessonId ? "Lesson rescheduled!" : "Lesson booked!"} Check your dashboard for
+        details.
       </p>
     );
   }

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { AuthError } from "next-auth";
 import { signIn, signOut } from "@/lib/auth";
 import { createLeadAssessmentSignup, signupSchema, SignupError } from "@/lib/signup";
-import { bookLesson, BookingError } from "@/lib/booking";
+import { bookLesson, cancelLesson, rescheduleLesson, BookingError } from "@/lib/booking";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -79,6 +79,40 @@ export async function bookLessonAction(
     if (err instanceof BookingError) return { error: err.message };
     throw err;
   }
+  return { error: null };
+}
+
+export async function cancelLessonAction(lessonId: string) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  try {
+    const result = await cancelLesson(lessonId, session.user.id);
+    revalidatePath("/dashboard");
+    return { error: null, forfeited: result.forfeited };
+  } catch (err) {
+    if (err instanceof BookingError) return { error: err.message, forfeited: false };
+    throw err;
+  }
+}
+
+export async function rescheduleLessonAction(
+  lessonId: string,
+  slot: { start: string; end: string }
+) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  try {
+    await rescheduleLesson(lessonId, session.user.id, {
+      start: new Date(slot.start),
+      end: new Date(slot.end),
+    });
+  } catch (err) {
+    if (err instanceof BookingError) return { error: err.message };
+    throw err;
+  }
+  revalidatePath("/dashboard");
   return { error: null };
 }
 

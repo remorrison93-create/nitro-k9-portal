@@ -30,6 +30,7 @@ just need a Postgres database to actually create/read records.
 | Temporary "lead" account for first-time assessment booking | `Role.LEAD` — created by `/signup`, promoted to `Role.CLIENT` when the assessment invoice is marked paid (see the Square webhook) |
 | Message center | `Message` model, `/dashboard/messages` (client) and `/admin/messages` (staff) |
 | Helpful links | `HelpfulLink` model, shown on `/dashboard` |
+| Reschedule/cancel a lesson (72h notice weekdays, 7 days weekends, else forfeit) | `src/lib/lesson-notice.ts` (pure policy calc, safe for client+server) + `src/lib/booking.ts` → `cancelLesson()` / `rescheduleLesson()`, surfaced on `/dashboard` under "Upcoming Lessons" / "Lesson History" |
 
 ## Getting started
 
@@ -51,10 +52,15 @@ only outbound HTTPS. If `npm run db:migrate` can't reach the database, you can b
 hand from your database provider's SQL editor (e.g. Supabase's):
 
 1. Run `prisma/migrations/20260721000000_init/migration.sql` — creates every table.
-2. Run `prisma/seed.sql` — inserts the same placeholder services/admin user/link as `npm run db:seed`.
+2. Run `prisma/migrations/20260721010000_lesson_notice_actions/migration.sql` — adds lesson
+   reschedule/cancel/forfeit support (skip this if your database is brand new and hasn't run
+   step 1 yet — the `db:migrate` / full init path already includes it).
+3. Run `prisma/seed.sql` — inserts the same placeholder services/admin user/link as `npm run db:seed`.
 
-Both use fixed ids, so running `npm run db:seed` later from somewhere with real connectivity is
-a safe no-op for rows already inserted this way.
+The seed file uses fixed ids, so running `npm run db:seed` later from somewhere with real
+connectivity is a safe no-op for rows already inserted this way. Each migration file only needs
+to be run once, ever, in order — running the same one twice will error on the second try
+(tables/columns already exist), which is expected and harmless.
 
 Without a real `DATABASE_URL`, everything not touching the database (the homepage, login
 and signup forms) still renders; pages that query Prisma (`/shop`, `/dashboard`, `/admin/*`)
