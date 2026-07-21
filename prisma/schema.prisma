@@ -1,0 +1,175 @@
+// Prisma schema for the Nitro K-9 client portal.
+// Placeholder-friendly: no real DB is required to run `prisma generate`.
+// A live PostgreSQL DATABASE_URL is only needed for `prisma migrate` / `prisma db push`.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  LEAD // temporary account: can book 1 assessment, browse shop, view links
+  CLIENT // full account: unlocked after contract signed + assessment paid
+  ADMIN // staff/trainer
+}
+
+enum ContractStatus {
+  NOT_SENT
+  SENT
+  SIGNED
+}
+
+enum WeightClass {
+  UNDER_35 // 30 minute lessons
+  OVER_35 // 60 minute lessons
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  PARTIALLY_PAID
+  VOID
+}
+
+enum LessonStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         Role     @default(LEAD)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  dogs        Dog[]
+  enrollments Enrollment[]
+  invoices    Invoice[]
+  messages    Message[]
+}
+
+model Dog {
+  id          String       @id @default(cuid())
+  name        String
+  breed       String?
+  weightLbs   Int
+  weightClass WeightClass
+  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId     String
+  enrollments Enrollment[]
+  createdAt   DateTime     @default(now())
+}
+
+// A bookable offering: the initial assessment, or a lesson-package program.
+model Service {
+  id                       String   @id @default(cuid())
+  name                     String
+  description              String?
+  priceCents               Int
+  // Number of lessons included, e.g. 1 for the assessment, or 3/7/14/28 for programs.
+  lessonCount              Int
+  // Lesson length in minutes, by dog weight class.
+  lessonLengthMinutesSmall Int      @default(30)
+  lessonLengthMinutesLarge Int      @default(60)
+  isAssessment             Boolean  @default(false)
+  active                   Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  enrollments Enrollment[]
+}
+
+// A client's purchase of a Service for a specific dog: tracks contract, payment, and lesson credits.
+model Enrollment {
+  id       String @id @default(cuid())
+  client   User   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+  dog      Dog    @relation(fields: [dogId], references: [id], onDelete: Cascade)
+  dogId    String
+  service  Service @relation(fields: [serviceId], references: [id])
+  serviceId String
+
+  contractStatus   ContractStatus @default(NOT_SENT)
+  contractSignedAt DateTime?
+  contractRef      String? // external reference (e.g. Square contract/document id)
+
+  lessonsTotal Int
+  lessonsUsed  Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoice Invoice?
+  lessons Lesson[]
+
+  @@index([clientId])
+}
+
+model Invoice {
+  id           String      @id @default(cuid())
+  client       User        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId     String
+  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id])
+  enrollmentId String?     @unique
+
+  squareInvoiceId String? @unique
+  amountDueCents  Int
+  amountPaidCents Int           @default(0)
+  status          InvoiceStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+// A scheduled (or completed/canceled) lesson slot, mirrored to an Outlook calendar event.
+model Lesson {
+  id             String       @id @default(cuid())
+  enrollment     Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  enrollmentId   String
+  scheduledStart DateTime
+  scheduledEnd   DateTime
+  status         LessonStatus @default(SCHEDULED)
+  outlookEventId String?      @unique
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enrollmentId])
+}
+
+model Message {
+  id       String @id @default(cuid())
+  sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  senderId String
+  // Simple single-thread-per-client model to start; staff replies use the same threadClientId.
+  threadClientId String
+  body           String
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([threadClientId])
+}
+
+model HelpfulLink {
+  id          String   @id @default(cuid())
+  title       String
+  url         String
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+}
