@@ -27,10 +27,10 @@ export default async function SchedulePage({
 
   return (
     <main className="mx-auto max-w-2xl flex-1 px-6 py-12">
-      <h1 className="text-2xl font-semibold text-zinc-900">
+      <h1 className="text-2xl font-semibold text-brand">
         Schedule a Lesson — {enrollment.dog.name}
       </h1>
-      <p className="mt-2 text-sm text-zinc-600">
+      <p className="mt-2 text-sm text-muted">
         {enrollment.service.name} · {lessonsLeft} of {enrollment.lessonsTotal} lessons remaining
       </p>
 

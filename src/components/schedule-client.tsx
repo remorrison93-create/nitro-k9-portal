@@ -43,12 +43,12 @@ export function ScheduleClient({
   }
 
   if (lessonsLeft <= 0) {
-    return <p className="mt-6 text-sm text-zinc-500">No lessons remaining on this program.</p>;
+    return <p className="mt-6 text-sm text-muted">No lessons remaining on this program.</p>;
   }
 
   if (booked) {
     return (
-      <p className="mt-6 rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+      <p className="mt-6 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
         Lesson booked! Check your dashboard for details.
       </p>
     );
@@ -56,10 +56,10 @@ export function ScheduleClient({
 
   return (
     <div className="mt-6">
-      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
-      {slots === null && <p className="text-sm text-zinc-500">Loading available times…</p>}
+      {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
+      {slots === null && <p className="text-sm text-muted">Loading available times…</p>}
       {slots?.length === 0 && (
-        <p className="text-sm text-zinc-500">No open slots in the next two weeks.</p>
+        <p className="text-sm text-muted">No open slots in the next two weeks.</p>
       )}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {slots?.map((slot) => (
@@ -67,7 +67,7 @@ export function ScheduleClient({
             key={slot.start}
             disabled={pending}
             onClick={() => handleBook(slot)}
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm hover:border-zinc-500 disabled:opacity-50"
+            className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground hover:border-brand disabled:opacity-50"
           >
             {new Date(slot.start).toLocaleString(undefined, {
               weekday: "short",

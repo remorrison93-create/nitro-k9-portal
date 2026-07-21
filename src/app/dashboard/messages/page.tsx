@@ -16,7 +16,7 @@ export default async function MessagesPage() {
 
   return (
     <main className="mx-auto max-w-2xl flex-1 px-6 py-12">
-      <h1 className="text-2xl font-semibold text-zinc-900">Messages</h1>
+      <h1 className="text-2xl font-semibold text-brand">Messages</h1>
       <MessageThread
         messages={messages.map((m) => ({
           id: m.id,

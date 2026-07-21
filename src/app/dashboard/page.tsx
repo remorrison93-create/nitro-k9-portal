@@ -31,11 +31,11 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-4xl flex-1 px-6 py-12">
-      <h1 className="text-2xl font-semibold text-zinc-900">
+      <h1 className="text-2xl font-semibold text-brand">
         Welcome, {session.user.firstName}
       </h1>
       {isLead && (
-        <p className="mt-2 max-w-xl rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="mt-2 max-w-xl rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
           You have a temporary account. Once your assessment is paid for, you&apos;ll get full
           access to the client dashboard — invoices, lesson scheduling for a full program, and
           messaging.
@@ -52,28 +52,28 @@ export default async function DashboardPage() {
             lessonsLeft > 0;
 
           return (
-            <div key={e.id} className="rounded-lg border border-zinc-200 bg-white p-5">
+            <div key={e.id} className="rounded-lg border border-border bg-card p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-zinc-900">
+                  <h2 className="font-semibold text-brand">
                     {e.service.name} — {e.dog.name}
                   </h2>
-                  <p className="text-sm text-zinc-500">{CONTRACT_LABEL[e.contractStatus]}</p>
+                  <p className="text-sm text-muted">{CONTRACT_LABEL[e.contractStatus]}</p>
                 </div>
                 <Link
                   href={canSchedule ? `/dashboard/schedule/${e.id}` : "#"}
                   aria-disabled={!canSchedule}
                   className={`rounded-md px-4 py-2 text-sm font-medium ${
                     canSchedule
-                      ? "bg-zinc-900 text-white hover:bg-zinc-700"
-                      : "cursor-not-allowed bg-zinc-100 text-zinc-400"
+                      ? "bg-brand text-white hover:bg-brand-dark"
+                      : "cursor-not-allowed bg-zinc-800 text-zinc-500"
                   }`}
                 >
                   Schedule a Lesson
                 </Link>
               </div>
 
-              <dl className="mt-4 grid grid-cols-2 gap-y-2 text-sm text-zinc-700 sm:grid-cols-4">
+              <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted sm:grid-cols-4">
                 <Stat label="Lessons elapsed" value={e.lessonsUsed} />
                 <Stat label="Lessons left" value={lessonsLeft} />
                 <Stat
@@ -90,15 +90,15 @@ export default async function DashboardPage() {
           );
         })}
         {enrollments.length === 0 && (
-          <p className="text-zinc-500">No programs yet — visit the shop to get started.</p>
+          <p className="text-muted">No programs yet — visit the shop to get started.</p>
         )}
       </section>
 
       {!isLead && (
         <section className="mt-10">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-zinc-900">Message Center</h2>
-            <Link href="/dashboard/messages" className="text-sm font-medium text-zinc-700 underline">
+            <h2 className="text-lg font-semibold text-brand">Message Center</h2>
+            <Link href="/dashboard/messages" className="text-sm font-medium text-brand underline">
               Open messages
             </Link>
           </div>
@@ -106,15 +106,15 @@ export default async function DashboardPage() {
       )}
 
       <section className="mt-10">
-        <h2 className="text-lg font-semibold text-zinc-900">Helpful Links</h2>
+        <h2 className="text-lg font-semibold text-brand">Helpful Links</h2>
         <ul className="mt-3 space-y-2">
           {links.map((link) => (
             <li key={link.id}>
-              <a href={link.url} className="text-sm font-medium text-zinc-700 underline">
+              <a href={link.url} className="text-sm font-medium text-brand underline">
                 {link.title}
               </a>
               {link.description && (
-                <p className="text-sm text-zinc-500">{link.description}</p>
+                <p className="text-sm text-muted">{link.description}</p>
               )}
             </li>
           ))}
@@ -127,8 +127,8 @@ export default async function DashboardPage() {
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-zinc-400">{label}</dt>
-      <dd className="font-medium text-zinc-900">{value}</dd>
+      <dt className="text-xs uppercase tracking-wide text-muted-2">{label}</dt>
+      <dd className="font-medium text-foreground">{value}</dd>
     </div>
   );
 }

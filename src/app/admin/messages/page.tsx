@@ -27,21 +27,21 @@ export default async function AdminMessagesPage() {
 
   return (
     <main className="mx-auto max-w-2xl flex-1 px-6 py-12">
-      <h1 className="text-2xl font-semibold text-zinc-900">Messages</h1>
+      <h1 className="text-2xl font-semibold text-brand">Messages</h1>
       <div className="mt-6 space-y-2">
         {threads.map(({ client, latest }) => (
           <Link
             key={client!.id}
             href={`/admin/messages/${client!.id}`}
-            className="block rounded-lg border border-zinc-200 bg-white p-4 hover:border-zinc-400"
+            className="block rounded-lg border border-border bg-card p-4 hover:border-brand"
           >
-            <p className="font-medium text-zinc-900">
+            <p className="font-medium text-foreground">
               {client!.firstName} {client!.lastName}
             </p>
-            <p className="mt-1 truncate text-sm text-zinc-500">{latest.body}</p>
+            <p className="mt-1 truncate text-sm text-muted">{latest.body}</p>
           </Link>
         ))}
-        {threads.length === 0 && <p className="text-zinc-500">No messages yet.</p>}
+        {threads.length === 0 && <p className="text-muted">No messages yet.</p>}
       </div>
     </main>
   );

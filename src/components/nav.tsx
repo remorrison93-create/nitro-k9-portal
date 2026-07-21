@@ -7,24 +7,24 @@ export async function Nav() {
   const role = session?.user.role;
 
   return (
-    <header className="border-b border-zinc-200 bg-white">
+    <header className="border-b border-border bg-background">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
+        <Link href="/" className="text-lg font-semibold tracking-tight text-brand">
           Nitro K-9
         </Link>
-        <nav className="flex items-center gap-5 text-sm font-medium text-zinc-700">
-          <Link href="/shop">Programs</Link>
+        <nav className="flex items-center gap-5 text-sm font-medium text-muted">
+          <Link href="/shop" className="hover:text-brand">Programs</Link>
           {!session && (
             <>
-              <Link href="/signup">Book an Assessment</Link>
-              <Link href="/login">Client Login</Link>
+              <Link href="/signup" className="hover:text-brand">Book an Assessment</Link>
+              <Link href="/login" className="hover:text-brand">Client Login</Link>
             </>
           )}
-          {session && role === "ADMIN" && <Link href="/admin">Admin</Link>}
-          {session && role !== "ADMIN" && <Link href="/dashboard">Dashboard</Link>}
+          {session && role === "ADMIN" && <Link href="/admin" className="hover:text-brand">Admin</Link>}
+          {session && role !== "ADMIN" && <Link href="/dashboard" className="hover:text-brand">Dashboard</Link>}
           {session && (
             <form action={logoutAction}>
-              <button type="submit" className="text-zinc-500 hover:text-zinc-900">
+              <button type="submit" className="text-muted hover:text-brand">
                 Sign out
               </button>
             </form>

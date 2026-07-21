@@ -21,7 +21,7 @@ export default async function AdminThreadPage({
 
   return (
     <main className="mx-auto max-w-2xl flex-1 px-6 py-12">
-      <h1 className="text-2xl font-semibold text-zinc-900">
+      <h1 className="text-2xl font-semibold text-brand">
         {client.firstName} {client.lastName}
       </h1>
       <MessageThread

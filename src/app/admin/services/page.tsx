@@ -12,24 +12,24 @@ export default async function AdminServicesPage() {
 
   return (
     <main className="mx-auto max-w-3xl flex-1 px-6 py-12">
-      <h1 className="text-2xl font-semibold text-zinc-900">Services</h1>
+      <h1 className="text-2xl font-semibold text-brand">Services</h1>
 
       <table className="mt-6 w-full text-left text-sm">
-        <thead className="text-xs uppercase tracking-wide text-zinc-400">
+        <thead className="text-xs uppercase tracking-wide text-muted-2">
           <tr>
-            <th className="pb-2">Name</th>
-            <th className="pb-2">Price</th>
-            <th className="pb-2">Lessons</th>
+            <th className="pb-2 pr-4">Name</th>
+            <th className="pb-2 pr-4">Price</th>
+            <th className="pb-2 pr-4">Lessons</th>
             <th className="pb-2">Length (small/large)</th>
           </tr>
         </thead>
         <tbody>
           {services.map((s) => (
-            <tr key={s.id} className="border-t border-zinc-100">
-              <td className="py-2 font-medium text-zinc-900">{s.name}</td>
-              <td className="py-2">{formatPrice(s.priceCents)}</td>
-              <td className="py-2">{s.lessonCount}</td>
-              <td className="py-2">
+            <tr key={s.id} className="border-t border-border">
+              <td className="py-2 pr-4 font-medium text-foreground">{s.name}</td>
+              <td className="py-2 pr-4 text-muted">{formatPrice(s.priceCents)}</td>
+              <td className="py-2 pr-4 text-muted">{s.lessonCount}</td>
+              <td className="py-2 text-muted">
                 {s.lessonLengthMinutesSmall} / {s.lessonLengthMinutesLarge} min
               </td>
             </tr>
@@ -37,7 +37,7 @@ export default async function AdminServicesPage() {
         </tbody>
       </table>
 
-      <h2 className="mt-10 text-lg font-semibold text-zinc-900">Add a Service</h2>
+      <h2 className="mt-10 text-lg font-semibold text-brand">Add a Service</h2>
       <NewServiceForm />
     </main>
   );

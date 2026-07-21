@@ -27,7 +27,7 @@ export function MessageThread({
           <div
             key={m.id}
             className={`max-w-md rounded-lg px-4 py-2 text-sm ${
-              m.fromStaff ? "bg-zinc-900 text-white" : "ml-auto bg-white border border-zinc-200"
+              m.fromStaff ? "bg-brand text-white" : "ml-auto bg-card border border-border text-foreground"
             }`}
           >
             <p className="text-xs opacity-70">
@@ -37,27 +37,22 @@ export function MessageThread({
           </div>
         ))}
         {messages.length === 0 && (
-          <p className="text-sm text-zinc-500">No messages yet — say hello!</p>
+          <p className="text-sm text-muted">No messages yet — say hello!</p>
         )}
       </div>
 
       <form action={formAction} className="mt-6 flex gap-2">
         {threadClientId && <input type="hidden" name="threadClientId" value={threadClientId} />}
-        <input
-          name="body"
-          placeholder="Type a message…"
-          required
-          className="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none"
-        />
+        <input name="body" placeholder="Type a message…" required className="field-input flex-1" />
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+          className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-50"
         >
           Send
         </button>
       </form>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
     </div>
   );
 }
