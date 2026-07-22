@@ -17,6 +17,10 @@ declare module "next-auth" {
 // Prisma-backed Credentials provider). Keeping providers out of this file is what lets
 // middleware run without bundling Prisma/bcrypt into the Edge runtime.
 export const authConfig = {
+  // Auth.js trusts the request's Host header automatically on Vercel; anywhere else (Netlify
+  // included) this needs to be explicit, or every auth request fails with an "UntrustedHost"
+  // server error — which is exactly what login was hitting.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [],
