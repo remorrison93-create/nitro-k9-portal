@@ -201,6 +201,48 @@ export async function createServiceAction(_prevState: string | null, formData: F
   return null;
 }
 
+export async function updateServiceAction(
+  serviceId: string,
+  data: {
+    name: string;
+    description: string;
+    priceDollars: number;
+    lessonCount: number;
+    lessonLengthMinutes: number;
+    isAssessment: boolean;
+  }
+) {
+  const session = await auth();
+  if (session?.user.role !== "ADMIN") return { error: "Unauthorized" };
+
+  if (!data.name.trim()) return { error: "Name is required." };
+  if (!Number.isFinite(data.priceDollars) || data.priceDollars < 0) {
+    return { error: "Enter a valid price." };
+  }
+  if (!Number.isFinite(data.lessonCount) || data.lessonCount < 1) {
+    return { error: "Enter a valid lesson count." };
+  }
+  if (data.lessonLengthMinutes !== 30 && data.lessonLengthMinutes !== 60) {
+    return { error: "Pick a lesson length." };
+  }
+
+  await prisma.service.update({
+    where: { id: serviceId },
+    data: {
+      name: data.name.trim(),
+      description: data.description.trim() || null,
+      priceCents: Math.round(data.priceDollars * 100),
+      lessonCount: data.lessonCount,
+      lessonLengthMinutes: data.lessonLengthMinutes,
+      isAssessment: data.isAssessment,
+    },
+  });
+
+  revalidatePath("/admin/services");
+  revalidatePath("/shop");
+  return { error: null };
+}
+
 export async function setServiceActiveAction(serviceId: string, active: boolean) {
   const session = await auth();
   if (session?.user.role !== "ADMIN") return { error: "Unauthorized" };
