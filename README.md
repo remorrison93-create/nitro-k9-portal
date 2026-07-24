@@ -113,9 +113,18 @@ To go live:
 
 1. [app.netlify.com](https://app.netlify.com) → **Add new site → Import an existing project** → pick
    this repo. Build settings are picked up from `netlify.toml` automatically.
-2. **Site configuration → Environment variables** — add at minimum `DATABASE_URL` and
-   `AUTH_SECRET` (generate one with `npx auth secret`). Add the Square/Graph/email vars later,
-   once those integrations are wired up for real.
+2. **Site configuration → Environment variables** — add at minimum:
+   - `DATABASE_URL` — **use Supabase's connection pooler, not the direct connection string.**
+     The direct host only resolves to IPv6, which Netlify's serverless functions can't reach —
+     this will manifest as working pages (anything not touching the DB) alongside a "Can't
+     reach database server" error the moment something queries Postgres, e.g. logging in. Get
+     the pooler string from Supabase: **Connect → ORM** (shows it in Prisma's format directly),
+     transaction mode, port 6543.
+   - `AUTH_SECRET` — generate with `npx auth secret`, or ask me to generate one.
+   - `trustHost` is already handled in code (`src/lib/auth.config.ts`) — Auth.js only
+     auto-trusts the request host on Vercel, so every other platform needs this set explicitly
+     or login fails with an "UntrustedHost" server error regardless of DB connectivity.
+   Add the Square/Graph/email vars later, once those integrations are wired up for real.
 3. Deploy. Netlify builds and gives you a live URL on every push to `main`.
 
 Note: this repo targets Next.js 16, which is very new — if the Netlify build fails on something
