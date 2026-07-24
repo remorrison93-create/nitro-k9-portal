@@ -4,12 +4,9 @@ import { prisma } from "@/lib/db";
 import { LessonActions } from "@/components/lesson-actions";
 import { DogProfile } from "@/components/dog-profile";
 import { noticeDeadline } from "@/lib/lesson-notice";
+import { formatPrice } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-function formatPrice(cents: number) {
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
-}
 
 function formatDateTime(d: Date) {
   return d.toLocaleString(undefined, {

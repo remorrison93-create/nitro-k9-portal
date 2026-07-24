@@ -204,3 +204,18 @@ export async function createServiceAction(_prevState: string | null, formData: F
   revalidatePath("/shop");
   return null;
 }
+
+export async function setServiceActiveAction(serviceId: string, active: boolean) {
+  const session = await auth();
+  if (session?.user.role !== "ADMIN") return { error: "Unauthorized" };
+
+  // Soft delete rather than a hard DELETE: services stay linked from any existing enrollment
+  // (the foreign key would reject a real delete anyway once a client has signed up for one),
+  // and `active: false` already means "hidden from /shop and new signups" everywhere else in
+  // the app — no other code needs to change for "removed" to mean this.
+  await prisma.service.update({ where: { id: serviceId }, data: { active } });
+
+  revalidatePath("/admin/services");
+  revalidatePath("/shop");
+  return { error: null };
+}

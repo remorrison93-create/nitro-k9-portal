@@ -1,11 +1,9 @@
 import { prisma } from "@/lib/db";
 import { NewServiceForm } from "@/components/new-service-form";
+import { ServiceActiveToggle } from "@/components/service-active-toggle";
+import { formatPrice, formatLessonLength } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-function formatPrice(cents: number) {
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
-}
 
 export default async function AdminServicesPage() {
   const services = await prisma.service.findMany({ orderBy: { createdAt: "asc" } });
@@ -20,17 +18,24 @@ export default async function AdminServicesPage() {
             <th className="pb-2 pr-4">Name</th>
             <th className="pb-2 pr-4">Price</th>
             <th className="pb-2 pr-4">Lessons</th>
-            <th className="pb-2">Length (small/large)</th>
+            <th className="pb-2 pr-4">Length</th>
+            <th className="pb-2"></th>
           </tr>
         </thead>
         <tbody>
           {services.map((s) => (
-            <tr key={s.id} className="border-t border-border">
-              <td className="py-2 pr-4 font-medium text-foreground">{s.name}</td>
+            <tr key={s.id} className={`border-t border-border ${s.active ? "" : "opacity-50"}`}>
+              <td className="py-2 pr-4 font-medium text-foreground">
+                {s.name}
+                {!s.active && <span className="ml-2 text-xs text-muted-2">(inactive)</span>}
+              </td>
               <td className="py-2 pr-4 text-muted">{formatPrice(s.priceCents)}</td>
               <td className="py-2 pr-4 text-muted">{s.lessonCount}</td>
-              <td className="py-2 text-muted">
-                {s.lessonLengthMinutesSmall} / {s.lessonLengthMinutesLarge} min
+              <td className="py-2 pr-4 text-muted">
+                {formatLessonLength(s.lessonLengthMinutesSmall, s.lessonLengthMinutesLarge)}
+              </td>
+              <td className="py-2">
+                <ServiceActiveToggle serviceId={s.id} active={s.active} />
               </td>
             </tr>
           ))}

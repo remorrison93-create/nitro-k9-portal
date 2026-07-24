@@ -1,11 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { formatPrice, formatLessonLength } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-function formatPrice(cents: number) {
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
-}
 
 export default async function ShopPage() {
   const services = await prisma.service.findMany({
@@ -40,7 +37,7 @@ export default async function ShopPage() {
               <div className="flex justify-between">
                 <dt>Lesson length</dt>
                 <dd className="font-medium text-foreground">
-                  {service.lessonLengthMinutesSmall}–{service.lessonLengthMinutesLarge} min
+                  {formatLessonLength(service.lessonLengthMinutesSmall, service.lessonLengthMinutesLarge)}
                 </dd>
               </div>
             </dl>
