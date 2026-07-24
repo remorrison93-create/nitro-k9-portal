@@ -24,8 +24,7 @@ const serviceSchema = z.object({
   description: z.string().optional(),
   priceCents: z.number().int().nonnegative(),
   lessonCount: z.number().int().positive(),
-  lessonLengthMinutesSmall: z.number().int().positive(),
-  lessonLengthMinutesLarge: z.number().int().positive(),
+  lessonLengthMinutes: z.union([z.literal(30), z.literal(60)]),
   isAssessment: z.boolean().optional(),
 });
 

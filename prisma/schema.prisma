@@ -80,19 +80,23 @@ model Dog {
 }
 
 // A bookable offering: the initial assessment, or a lesson-package program.
+//
+// Each service has exactly one lesson length (30 or 60 min) and one price, because the two
+// lengths are priced differently — a service isn't "for small or large dogs", it's for one or
+// the other. Offering both durations under one program name means creating two Service rows.
+// The exception is isAssessment services: those apply to any dog regardless of size (see
+// lib/booking.ts, which skips the length/dog-size relationship entirely for those).
 model Service {
-  id                       String   @id @default(cuid())
-  name                     String
-  description              String?
-  priceCents               Int
+  id                  String   @id @default(cuid())
+  name                String
+  description         String?
+  priceCents          Int
   // Number of lessons included, e.g. 1 for the assessment, or 3/7/14/28 for programs.
-  lessonCount              Int
-  // Lesson length in minutes, by dog weight class.
-  lessonLengthMinutesSmall Int      @default(30)
-  lessonLengthMinutesLarge Int      @default(60)
-  isAssessment             Boolean  @default(false)
-  active                   Boolean  @default(true)
-  createdAt                DateTime @default(now())
+  lessonCount         Int
+  lessonLengthMinutes Int      @default(30)
+  isAssessment        Boolean  @default(false)
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
   updatedAt                DateTime @updatedAt
 
   enrollments Enrollment[]

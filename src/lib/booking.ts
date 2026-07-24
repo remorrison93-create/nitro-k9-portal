@@ -41,15 +41,10 @@ export async function bookLesson(
     throw new BookingError("No lessons remaining on this program.", 403);
   }
 
-  const expectedMinutes =
-    enrollment.dog.weightClass === "OVER_35"
-      ? enrollment.service.lessonLengthMinutesLarge
-      : enrollment.service.lessonLengthMinutesSmall;
-
   const actualMinutes = (slot.end.getTime() - slot.start.getTime()) / 60_000;
-  if (actualMinutes !== expectedMinutes) {
+  if (actualMinutes !== enrollment.service.lessonLengthMinutes) {
     throw new BookingError(
-      `This program's lesson length for ${enrollment.dog.name} is ${expectedMinutes} minutes.`,
+      `This program's lesson length is ${enrollment.service.lessonLengthMinutes} minutes.`,
       400
     );
   }
@@ -78,15 +73,6 @@ export async function bookLesson(
   ]);
 
   return lesson;
-}
-
-export function lessonLengthFor(
-  dogWeightClass: "UNDER_35" | "OVER_35",
-  service: { lessonLengthMinutesSmall: number; lessonLengthMinutesLarge: number }
-) {
-  return dogWeightClass === "OVER_35"
-    ? service.lessonLengthMinutesLarge
-    : service.lessonLengthMinutesSmall;
 }
 
 // Cancels a scheduled lesson. Sufficient notice (see lib/lesson-notice.ts) returns the credit
@@ -161,11 +147,10 @@ export async function rescheduleLesson(
     );
   }
 
-  const expectedMinutes = lessonLengthFor(lesson.enrollment.dog.weightClass, lesson.enrollment.service);
   const actualMinutes = (newSlot.end.getTime() - newSlot.start.getTime()) / 60_000;
-  if (actualMinutes !== expectedMinutes) {
+  if (actualMinutes !== lesson.enrollment.service.lessonLengthMinutes) {
     throw new BookingError(
-      `This program's lesson length for ${lesson.enrollment.dog.name} is ${expectedMinutes} minutes.`,
+      `This program's lesson length is ${lesson.enrollment.service.lessonLengthMinutes} minutes.`,
       400
     );
   }

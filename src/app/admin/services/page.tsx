@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { NewServiceForm } from "@/components/new-service-form";
 import { ServiceActiveToggle } from "@/components/service-active-toggle";
-import { formatPrice, formatLessonLength } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -31,9 +31,7 @@ export default async function AdminServicesPage() {
               </td>
               <td className="py-2 pr-4 text-muted">{formatPrice(s.priceCents)}</td>
               <td className="py-2 pr-4 text-muted">{s.lessonCount}</td>
-              <td className="py-2 pr-4 text-muted">
-                {formatLessonLength(s.lessonLengthMinutesSmall, s.lessonLengthMinutesLarge)}
-              </td>
+              <td className="py-2 pr-4 text-muted">{s.lessonLengthMinutes} min</td>
               <td className="py-2">
                 <ServiceActiveToggle serviceId={s.id} active={s.active} />
               </td>

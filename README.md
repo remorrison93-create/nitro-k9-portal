@@ -25,7 +25,7 @@ just need a Postgres database to actually create/read records.
 | Client dashboard (contract status, balance, dog, program, lessons left/elapsed) | `/dashboard`, `Enrollment` + `Invoice` models |
 | "Can't pay or schedule until contract signed" / "must pay before scheduling" | `src/lib/booking.ts` → `bookLesson()`, the single gate every booking path goes through |
 | Lesson-credit decrement per booking | Same function — creates the `Lesson` row and increments `Enrollment.lessonsUsed` in one transaction |
-| 30 min (≤35 lbs) vs 60 min (>35 lbs) lesson length | `Dog.weightClass` × `Service.lessonLengthMinutesSmall/Large`, resolved in `lessonLengthFor()` |
+| 30 min (≤35 lbs) vs 60 min (>35 lbs) lesson length, priced separately | Each `Service` has one `lessonLengthMinutes` (30 or 60, picked via radio button when adding a service) and one price — a "program" that serves both dog sizes is two separate `Service` rows, since the two lengths aren't priced the same. Exception: `isAssessment` services apply to any dog size regardless of their length. |
 | Outlook-backed available slots | `src/lib/integrations/outlook.ts` (placeholder), called from `/api/enrollments/[id]/availability` |
 | Temporary "lead" account for first-time assessment booking | `Role.LEAD` — created by `/signup`, promoted to `Role.CLIENT` when the assessment invoice is marked paid (see the Square webhook) |
 | Message center | `Message` model, `/dashboard/messages` (client) and `/admin/messages` (staff) |
@@ -68,7 +68,12 @@ are catching up on later features): run only what's missing, in order:
    on every table (no policies — the app connects directly as the table-owning role and
    bypasses RLS regardless; this only closes off Supabase's auto-exposed public REST API,
    which the app doesn't use).
-5. `prisma/seed.sql` — placeholder services/admin user/link (same as `npm run db:seed`).
+5. `prisma/migrations/20260724000000_single_lesson_length/migration.sql` — replaces
+   `Service.lessonLengthMinutesSmall/Large` with a single `lessonLengthMinutes` (each service
+   is 30 *or* 60 min, priced separately, not both at once). Backfills existing rows from their
+   old "small" value before dropping the old columns, so this is safe to run even with real
+   data already in the table.
+6. `prisma/seed.sql` — placeholder services/admin user/link (same as `npm run db:seed`).
 
 The seed data uses fixed ids, so running it (or `npm run db:seed`) again later from somewhere
 with real connectivity is a safe no-op. Each migration only needs to run once, ever — running

@@ -1,9 +1,7 @@
 -- ============================================================
 -- Nitro K-9 Portal — full manual database setup
 -- Paste this WHOLE file into Supabase SQL Editor and run it once.
--- Combines: init migration + lesson notice/reschedule migration +
--- dog profile migration + RLS enablement + placeholder seed data,
--- in the correct order.
+-- Combines every migration plus placeholder seed data, in order.
 -- ============================================================
 
 -- === 1) init ===
@@ -237,7 +235,24 @@ ALTER TABLE "Lesson" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Message" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "HelpfulLink" ENABLE ROW LEVEL SECURITY;
 
--- === 5) seed data ===
+-- === 5) single_lesson_length ===
+-- Replace lessonLengthMinutesSmall/Large with a single lessonLengthMinutes: each service now
+-- has exactly one lesson length (30 or 60 min) and one price, since the two lengths are priced
+-- differently. Backfill from the existing "small" value before dropping the old columns, so
+-- existing rows (in particular the Assessment, which was 60/60) end up with the right value
+-- instead of silently resetting to a default.
+
+ALTER TABLE "Service" ADD COLUMN "lessonLengthMinutes" INTEGER;
+
+UPDATE "Service" SET "lessonLengthMinutes" = "lessonLengthMinutesSmall";
+
+ALTER TABLE "Service" ALTER COLUMN "lessonLengthMinutes" SET NOT NULL;
+ALTER TABLE "Service" ALTER COLUMN "lessonLengthMinutes" SET DEFAULT 30;
+
+ALTER TABLE "Service" DROP COLUMN "lessonLengthMinutesSmall";
+ALTER TABLE "Service" DROP COLUMN "lessonLengthMinutesLarge";
+
+-- === 6) seed data ===
 -- Manual seed for use in the Supabase SQL Editor, when `npm run db:seed` can't reach the
 -- database directly (e.g. from a sandboxed dev session). Mirrors prisma/seed.ts — same fixed
 -- ids, so running `npm run db:seed` later from anywhere with real connectivity is a safe no-op
@@ -246,13 +261,12 @@ ALTER TABLE "HelpfulLink" ENABLE ROW LEVEL SECURITY;
 -- Admin login seeded below: admin@example.com / change-me-now — change this password (or
 -- delete the row and reseed) before this goes anywhere near production.
 
-INSERT INTO "Service" (id, name, description, "priceCents", "lessonCount", "lessonLengthMinutesSmall", "lessonLengthMinutesLarge", "isAssessment", active, "createdAt", "updatedAt")
+-- Only the assessment is seeded — it's required for the signup flow to work at all. Real
+-- training programs get added through the admin panel (each one a specific lesson count,
+-- 30-or-60-min length, and price — not guessed placeholder numbers).
+INSERT INTO "Service" (id, name, description, "priceCents", "lessonCount", "lessonLengthMinutes", "isAssessment", active, "createdAt", "updatedAt")
 VALUES
-  ('svc-assessment', 'Initial Assessment', 'Required first session before starting a training program.', 10000, 1, 60, 60, true, true, now(), now()),
-  ('svc-program-3', '3-Lesson Training Program', 'Placeholder description — edit price and details in the admin panel.', 45000, 3, 30, 60, false, true, now(), now()),
-  ('svc-program-7', '7-Lesson Training Program', 'Placeholder description — edit price and details in the admin panel.', 95000, 7, 30, 60, false, true, now(), now()),
-  ('svc-program-14', '14-Lesson Training Program', 'Placeholder description — edit price and details in the admin panel.', 175000, 14, 30, 60, false, true, now(), now()),
-  ('svc-program-28', '28-Lesson Training Program', 'Placeholder description — edit price and details in the admin panel.', 325000, 28, 30, 60, false, true, now(), now())
+  ('svc-assessment', 'Initial Assessment', 'Required first session before starting a training program.', 10000, 1, 60, true, true, now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO "HelpfulLink" (id, title, url, description, "sortOrder", "createdAt")

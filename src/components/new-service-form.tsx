@@ -24,17 +24,22 @@ export function NewServiceForm() {
         Lesson count
         <input name="lessonCount" type="number" required className="field-input mt-1" />
       </label>
-      <label className="block text-sm font-medium text-muted">
-        Lesson length — small dogs (min)
-        <input name="lessonLengthMinutesSmall" type="number" defaultValue={30} required className="field-input mt-1" />
-      </label>
-      <label className="block text-sm font-medium text-muted">
-        Lesson length — large dogs (min)
-        <input name="lessonLengthMinutesLarge" type="number" defaultValue={60} required className="field-input mt-1" />
-      </label>
-      <label className="flex items-center gap-2 text-sm font-medium text-muted">
+      <fieldset className="sm:col-span-2">
+        <legend className="text-sm font-medium text-muted">Lesson length</legend>
+        <div className="mt-1 flex gap-6">
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input type="radio" name="lessonLengthMinutes" value={30} defaultChecked />
+            30 min (dogs 35 lbs and under)
+          </label>
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input type="radio" name="lessonLengthMinutes" value={60} />
+            60 min (dogs over 35 lbs)
+          </label>
+        </div>
+      </fieldset>
+      <label className="flex items-center gap-2 text-sm font-medium text-muted sm:col-span-2">
         <input name="isAssessment" type="checkbox" />
-        This is the initial assessment
+        This is the initial assessment (applies to any dog size)
       </label>
 
       {error && <p className="text-sm text-red-400 sm:col-span-2">{error}</p>}

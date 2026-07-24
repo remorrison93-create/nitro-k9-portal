@@ -176,16 +176,13 @@ export async function createServiceAction(_prevState: string | null, formData: F
 
   const priceDollars = Number(formData.get("price"));
   const lessonCount = Number(formData.get("lessonCount"));
-  const lessonLengthMinutesSmall = Number(formData.get("lessonLengthMinutesSmall"));
-  const lessonLengthMinutesLarge = Number(formData.get("lessonLengthMinutesLarge"));
+  const lessonLengthMinutes = Number(formData.get("lessonLengthMinutes"));
 
-  if (
-    !Number.isFinite(priceDollars) ||
-    !Number.isFinite(lessonCount) ||
-    !Number.isFinite(lessonLengthMinutesSmall) ||
-    !Number.isFinite(lessonLengthMinutesLarge)
-  ) {
+  if (!Number.isFinite(priceDollars) || !Number.isFinite(lessonCount)) {
     return "Please fill out every field with a valid number.";
+  }
+  if (lessonLengthMinutes !== 30 && lessonLengthMinutes !== 60) {
+    return "Pick a lesson length.";
   }
 
   await prisma.service.create({
@@ -194,8 +191,7 @@ export async function createServiceAction(_prevState: string | null, formData: F
       description: (formData.get("description") as string) || null,
       priceCents: Math.round(priceDollars * 100),
       lessonCount,
-      lessonLengthMinutesSmall,
-      lessonLengthMinutesLarge,
+      lessonLengthMinutes,
       isAssessment: formData.get("isAssessment") === "on",
     },
   });

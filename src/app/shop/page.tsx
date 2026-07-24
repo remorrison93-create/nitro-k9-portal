@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { formatPrice, formatLessonLength } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +14,8 @@ export default async function ShopPage() {
     <main className="mx-auto max-w-4xl flex-1 px-6 py-16">
       <h1 className="text-2xl font-semibold text-brand">Training Programs</h1>
       <p className="mt-2 text-muted">
-        Every program includes a set number of lessons — 30 minutes for dogs 35 lbs and under,
-        60 minutes for dogs over 35 lbs.
+        Programs come in a 30-minute version (dogs 35 lbs and under) and a 60-minute version
+        (dogs over 35 lbs) — pick the one that matches your dog.
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -36,9 +36,7 @@ export default async function ShopPage() {
               </div>
               <div className="flex justify-between">
                 <dt>Lesson length</dt>
-                <dd className="font-medium text-foreground">
-                  {formatLessonLength(service.lessonLengthMinutesSmall, service.lessonLengthMinutesLarge)}
-                </dd>
+                <dd className="font-medium text-foreground">{service.lessonLengthMinutes} min</dd>
               </div>
             </dl>
           </div>
