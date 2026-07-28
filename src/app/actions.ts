@@ -6,8 +6,14 @@ import { AuthError } from "next-auth";
 import { signIn, signOut } from "@/lib/auth";
 import { createLeadAssessmentSignup, signupSchema, SignupError } from "@/lib/signup";
 import { bookLesson, cancelLesson, rescheduleLesson, BookingError } from "@/lib/booking";
+import { setContractStatus, setInvoiceStatusForEnrollment } from "@/lib/enrollment";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+
+async function requireAdmin() {
+  const session = await auth();
+  return session?.user.role === "ADMIN" ? session : null;
+}
 
 export async function loginAction(_prevState: string | null, formData: FormData) {
   try {
@@ -255,5 +261,120 @@ export async function setServiceActiveAction(serviceId: string, active: boolean)
 
   revalidatePath("/admin/services");
   revalidatePath("/shop");
+  return { error: null };
+}
+
+// Admin assigns a program to a client's dog: creates the Enrollment (with the service's full
+// lesson count as tentative, unusable credits) and a DRAFT invoice. Nothing is bookable until
+// the contract/invoice checkboxes below mark it SIGNED + PAID — bookLesson() already enforces
+// that gate, so no booking-side changes were needed for this.
+export async function assignProgramAction(clientId: string, dogId: string, serviceId: string) {
+  const session = await requireAdmin();
+  if (!session) return { error: "Unauthorized" };
+
+  const [dog, service] = await Promise.all([
+    prisma.dog.findUnique({ where: { id: dogId } }),
+    prisma.service.findUnique({ where: { id: serviceId } }),
+  ]);
+  if (!dog || dog.ownerId !== clientId) return { error: "That dog doesn't belong to this client." };
+  if (!service) return { error: "Service not found." };
+
+  const enrollment = await prisma.enrollment.create({
+    data: { clientId, dogId, serviceId, lessonsTotal: service.lessonCount },
+  });
+  await prisma.invoice.create({
+    data: { clientId, enrollmentId: enrollment.id, amountDueCents: service.priceCents },
+  });
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  revalidatePath("/admin/clients");
+  return { error: null };
+}
+
+export async function setEnrollmentContractStatusAction(
+  enrollmentId: string,
+  status: "NOT_SENT" | "SENT" | "SIGNED"
+) {
+  const session = await requireAdmin();
+  if (!session) return { error: "Unauthorized" };
+
+  const enrollment = await prisma.enrollment.findUnique({ where: { id: enrollmentId } });
+  if (!enrollment) return { error: "Enrollment not found." };
+
+  await setContractStatus(enrollmentId, status);
+  revalidatePath(`/admin/clients/${enrollment.clientId}`);
+  return { error: null };
+}
+
+export async function setEnrollmentInvoiceStatusAction(
+  enrollmentId: string,
+  status: "DRAFT" | "SENT" | "PAID"
+) {
+  const session = await requireAdmin();
+  if (!session) return { error: "Unauthorized" };
+
+  const enrollment = await prisma.enrollment.findUnique({ where: { id: enrollmentId } });
+  if (!enrollment) return { error: "Enrollment not found." };
+
+  await setInvoiceStatusForEnrollment(enrollmentId, status);
+  revalidatePath(`/admin/clients/${enrollment.clientId}`);
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
+export async function createLinkAction(_prevState: string | null, formData: FormData) {
+  const session = await requireAdmin();
+  if (!session) return "Unauthorized";
+
+  const title = (formData.get("title") as string)?.trim();
+  const url = (formData.get("url") as string)?.trim();
+  if (!title || !url) return "Title and URL are required.";
+
+  await prisma.helpfulLink.create({
+    data: {
+      title,
+      url,
+      description: (formData.get("description") as string)?.trim() || null,
+      sortOrder: Number(formData.get("sortOrder")) || 0,
+    },
+  });
+
+  revalidatePath("/admin/links");
+  revalidatePath("/dashboard");
+  return null;
+}
+
+export async function updateLinkAction(
+  linkId: string,
+  data: { title: string; url: string; description: string; sortOrder: number }
+) {
+  const session = await requireAdmin();
+  if (!session) return { error: "Unauthorized" };
+
+  if (!data.title.trim() || !data.url.trim()) return { error: "Title and URL are required." };
+
+  await prisma.helpfulLink.update({
+    where: { id: linkId },
+    data: {
+      title: data.title.trim(),
+      url: data.url.trim(),
+      description: data.description.trim() || null,
+      sortOrder: Number.isFinite(data.sortOrder) ? data.sortOrder : 0,
+    },
+  });
+
+  revalidatePath("/admin/links");
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
+export async function deleteLinkAction(linkId: string) {
+  const session = await requireAdmin();
+  if (!session) return { error: "Unauthorized" };
+
+  await prisma.helpfulLink.delete({ where: { id: linkId } });
+
+  revalidatePath("/admin/links");
+  revalidatePath("/dashboard");
   return { error: null };
 }

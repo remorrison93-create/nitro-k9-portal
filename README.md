@@ -27,9 +27,10 @@ just need a Postgres database to actually create/read records.
 | Lesson-credit decrement per booking | Same function — creates the `Lesson` row and increments `Enrollment.lessonsUsed` in one transaction |
 | 30 min (≤35 lbs) vs 60 min (>35 lbs) lesson length, priced separately | Each `Service` has one `lessonLengthMinutes` (30 or 60, picked via radio button when adding a service) and one price — a "program" that serves both dog sizes is two separate `Service` rows, since the two lengths aren't priced the same. Exception: `isAssessment` services apply to any dog size regardless of their length. |
 | Outlook-backed available slots | `src/lib/integrations/outlook.ts` (placeholder), called from `/api/enrollments/[id]/availability` |
-| Temporary "lead" account for first-time assessment booking | `Role.LEAD` — created by `/signup`, promoted to `Role.CLIENT` when the assessment invoice is marked paid (see the Square webhook) |
+| Temporary "lead" account for first-time assessment booking | `Role.LEAD` — created by `/signup`, promoted to `Role.CLIENT` whenever any invoice is marked paid (see `lib/enrollment.ts`) |
 | Message center | `Message` model, `/dashboard/messages` (client) and `/admin/messages` (staff) |
-| Helpful links | `HelpfulLink` model, shown on `/dashboard` |
+| Helpful links, admin-editable | `HelpfulLink` model, shown on `/dashboard`, managed at `/admin/links` |
+| Manual contract/invoice tracking until Square is wired up | Admin assigns a program to a client's dog at `/admin/clients/[id]` (creates the `Enrollment` + a `DRAFT` `Invoice` — lesson credits exist but aren't usable yet), then checks off Contract Sent/Signed and Invoice Sent/Paid as they happen in Square manually. `src/lib/enrollment.ts` holds the actual state transitions (incl. the LEAD→CLIENT promotion) so the admin checkboxes and the real Square webhook can't drift once that's connected — same effects either way. |
 | Reschedule/cancel a lesson (72h notice weekdays, 7 days weekends, else forfeit) | `src/lib/lesson-notice.ts` (pure policy calc, safe for client+server) + `src/lib/booking.ts` → `cancelLesson()` / `rescheduleLesson()`, surfaced on `/dashboard` under "Upcoming Lessons" / "Lesson History" |
 | Dog profile photo + bio, client-editable | `Dog.photoUrl` / `Dog.bio`, `updateDogProfileAction()`, `/dashboard` "Your Dogs" section (`src/components/dog-profile.tsx`) — see note below on where the photo actually lives |
 

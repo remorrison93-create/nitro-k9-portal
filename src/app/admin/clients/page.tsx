@@ -26,9 +26,14 @@ export default async function AdminClientsPage() {
                   {c.email} · {c.role}
                 </p>
               </div>
-              <Link href={`/admin/messages/${c.id}`} className="text-sm font-medium text-brand underline">
-                Message
-              </Link>
+              <div className="flex shrink-0 gap-3 text-sm font-medium">
+                <Link href={`/admin/clients/${c.id}`} className="text-brand underline">
+                  Manage
+                </Link>
+                <Link href={`/admin/messages/${c.id}`} className="text-brand underline">
+                  Message
+                </Link>
+              </div>
             </div>
             {c.enrollments.length > 0 && (
               <ul className="mt-2 text-sm text-muted">

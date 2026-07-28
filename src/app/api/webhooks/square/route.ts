@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { verifyWebhookSignature } from "@/lib/integrations/square";
+import { setContractStatus, setInvoiceStatusForEnrollment } from "@/lib/enrollment";
 
 // Placeholder Square webhook handler. Real payload shapes (invoice.updated,
 // invoice.payment_made, and whatever event carries contract-signed status — see the note in
@@ -8,6 +8,10 @@ import { verifyWebhookSignature } from "@/lib/integrations/square";
 // simplified shape so the rest of the app (gating on contractStatus/invoice.status) can be
 // exercised end-to-end with mock data:
 //   { type: "invoice.paid" | "contract.signed", enrollmentId: string }
+//
+// Until Square is actually wired up, the admin panel's manual contract/invoice checkboxes
+// (see actions.ts) drive these same fields directly — see lib/enrollment.ts for the shared
+// logic so the two paths can't drift.
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-square-hmacsha256-signature");
@@ -19,28 +23,11 @@ export async function POST(request: Request) {
   const event = JSON.parse(rawBody) as { type: string; enrollmentId: string };
 
   if (event.type === "contract.signed") {
-    await prisma.enrollment.update({
-      where: { id: event.enrollmentId },
-      data: { contractStatus: "SIGNED", contractSignedAt: new Date() },
-    });
+    await setContractStatus(event.enrollmentId, "SIGNED");
   }
 
   if (event.type === "invoice.paid") {
-    await prisma.invoice.updateMany({
-      where: { enrollmentId: event.enrollmentId },
-      data: { status: "PAID" },
-    });
-    // Assessment payment is also what promotes a LEAD account to a full CLIENT account.
-    const enrollment = await prisma.enrollment.findUnique({
-      where: { id: event.enrollmentId },
-      include: { service: true },
-    });
-    if (enrollment?.service.isAssessment) {
-      await prisma.user.update({
-        where: { id: enrollment.clientId },
-        data: { role: "CLIENT" },
-      });
-    }
+    await setInvoiceStatusForEnrollment(event.enrollmentId, "PAID");
   }
 
   return NextResponse.json({ received: true });
