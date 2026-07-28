@@ -79,7 +79,9 @@ export async function createLeadAssessmentSignup(input: SignupInput) {
       enrollmentId: enrollment.id,
       squareInvoiceId: invoice.squareInvoiceId,
       amountDueCents: assessment.priceCents,
-      status: "SENT",
+      // Not SENT — admin marks it sent (and later paid) manually once they've actually sent
+      // it via Square, same as any other assigned program. Signing up doesn't send anything.
+      status: "DRAFT",
     },
   });
 
