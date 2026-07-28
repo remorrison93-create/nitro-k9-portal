@@ -23,6 +23,19 @@ function calendarUser(): string {
 // don't re-authenticate on every call. A cold start just fetches a fresh one.
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
+// JWT claims are base64url, not encrypted — readable without the signing key, only signature
+// *verification* needs a secret. Used purely for diagnostic logging (which app roles/permissions
+// Entra actually put on the token), never for trust decisions.
+function decodeJwtClaims(token: string): Record<string, unknown> | null {
+  try {
+    const payload = token.split(".")[1];
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(Buffer.from(base64, "base64").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
 async function getAccessToken(): Promise<string> {
   if (cachedToken && cachedToken.expiresAt > Date.now() + 30_000) {
     return cachedToken.token;
@@ -49,6 +62,15 @@ async function getAccessToken(): Promise<string> {
 
   const data = (await res.json()) as { access_token: string; expires_in: number };
   cachedToken = { token: data.access_token, expiresAt: Date.now() + data.expires_in * 1000 };
+
+  const claims = decodeJwtClaims(data.access_token);
+  console.warn("[outlook:diagnostic] acquired Graph token", {
+    aud: claims?.aud,
+    appid: claims?.appid,
+    tid: claims?.tid,
+    roles: claims?.roles,
+  });
+
   return data.access_token;
 }
 
