@@ -89,7 +89,19 @@ async function graphFetch(path: string, init: RequestInit = {}): Promise<Respons
   });
 
   if (!res.ok) {
-    throw new Error(`Microsoft Graph request failed: ${res.status} ${await res.text()}`);
+    const body = await res.text();
+    // A 401 with an empty body (no JSON error object) means Graph's auth gateway rejected the
+    // request before it ever reached calendar logic — the real reason lives in the
+    // WWW-Authenticate header (standard OAuth behavior), not the body. Log it explicitly since
+    // the thrown error's body-derived message is otherwise blank and unhelpful.
+    console.warn("[outlook:diagnostic] Graph request failed", {
+      path,
+      status: res.status,
+      wwwAuthenticate: res.headers.get("www-authenticate"),
+      requestId: res.headers.get("request-id") ?? res.headers.get("client-request-id"),
+      body,
+    });
+    throw new Error(`Microsoft Graph request failed: ${res.status} ${body}`);
   }
   return res;
 }
