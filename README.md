@@ -95,10 +95,13 @@ will 500 until a database is connected. That's expected for right now.
    native e-signature product. If contracts go through a separate tool (PandaDoc, DocuSign,
    Square's own agreement flow), that tool's webhook needs to land on
    `contractStatus = SIGNED` the same way.
-2. **Outlook / Microsoft Graph** — `MS_GRAPH_CLIENT_ID` unset ⇒ `getAvailableSlots()` returns
-   generated 9–5 weekday mock slots and `createCalendarEvent()` returns a fake event id. Real
-   work: app registration in Entra ID, application-permission OAuth (`Calendars.ReadWrite`),
-   and swapping the three functions in `src/lib/integrations/outlook.ts` for real Graph calls.
+2. ~~**Outlook / Microsoft Graph**~~ — **live**, as of the app registration set up in Entra ID.
+   `src/lib/integrations/outlook.ts` does real client-credentials auth (with in-memory token
+   caching) and calls `calendarView` / `events` against `MS_GRAPH_CALENDAR_USER`'s calendar.
+   Still falls back to mock slots/fake event ids if `MS_GRAPH_CLIENT_ID` is unset, so it's safe
+   in any environment without the real env vars. Note: `createCalendarEvent()` adds the client
+   as an event attendee, so they'll get a real Outlook invite email on every booking — sent
+   from whatever mailbox `MS_GRAPH_CALENDAR_USER` points at (a test mailbox for now).
 3. **Email** — `EMAIL_PROVIDER_API_KEY` unset ⇒ `sendEmail()` just logs. Pick either Graph
    send-as (reuses the Outlook app registration) or a provider like Postmark/Resend.
 4. **Auth** — the credentials/bcrypt provider in `src/lib/auth.ts` is a fine starting point,
